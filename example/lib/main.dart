@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -27,8 +29,11 @@ class _MyAppState extends State<MyApp> {
     try {
       var options =
           PusherOptions(host: '10.0.2.2', port: 6001, encrypted: false);
-      FlutterPusher pusher = FlutterPusher('app', options, enableLogging: true);
-      pusher.connect();
+      PusherClient pusher = PusherClient('app', options, enableLogging: true);
+
+      pusher
+          .subscribe('channel')
+          .bind('event', (event) => log('event' + event.toJson().toString()));
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }

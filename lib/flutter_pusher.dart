@@ -18,8 +18,16 @@ enum PusherConnectionState {
 class Channel {
   final String name;
   final FlutterPusher pusher;
+  MethodChannel _channel;
 
-  Channel({this.name, this.pusher});
+  Channel({this.name, this.pusher, MethodChannel channel}) {
+    this._channel = channel;
+    this._subscribe();
+  }
+
+  void _subscribe() async {
+    await _channel.invokeMethod('subscribe', this.name);
+  }
 
   /// Bind to listen for events sent on the given channel
   Future bind(String eventName, void Function(Event) onEvent) async {
@@ -49,7 +57,7 @@ class FlutterPusher {
   static const EventChannel _eventChannel =
       const EventChannel('com.github.heywhy/pusherStream');
 
-  static Map<String, void Function(Event)> eventCallbacks =
+  Map<String, void Function(Event)> eventCallbacks =
       Map<String, void Function(Event)>();
 
   static void Function(ConnectionError) _onError;
@@ -64,6 +72,9 @@ class FlutterPusher {
     void Function(ConnectionStateChange) onConnectionStateChange,
   })  : assert(appKey != null),
         assert(options != null) {
+
+    _onError = onError;
+    _onConnectionStateChange = onConnectionStateChange;
     _init(appKey, options, enableLogging: enableLogging);
     if (!lazyConnect) {
       connect(onError: onError, onConnectionStateChange: onConnectionStateChange);
@@ -75,8 +86,10 @@ class FlutterPusher {
     void Function(ConnectionStateChange) onConnectionStateChange,
     void Function(ConnectionError) onError,
   }) async {
-    _onConnectionStateChange = onConnectionStateChange;
-    _onError = onError;
+    _onConnectionStateChange = onConnectionStateChange != null
+      ? onConnectionStateChange : _onConnectionStateChange;
+    _onError = onError != null ? onError : _onError;
+
     await _channel.invokeMethod('connect');
   }
 
@@ -88,9 +101,8 @@ class FlutterPusher {
 
   /// Subscribe to a channel
   /// Use the returned [Channel] to bind events
-  Future<Channel> subscribe(String channelName) async {
-    await _channel.invokeMethod('subscribe', channelName);
-    return Channel(name: channelName, pusher: this);
+  Channel subscribe(String channelName) {
+    return Channel(name: channelName, pusher: this, channel: _channel);
   }
 
   /// Unsubscribe from a channel
@@ -162,6 +174,24 @@ class FlutterPusher {
 
     await _channel.invokeMethod('trigger', bindArgs);
   }
+}
+
+class PusherClient extends FlutterPusher {
+    PusherClient(
+    String appKey,
+    PusherOptions options, {
+    bool lazyConnect = false,
+    bool enableLogging = false,
+    void Function(ConnectionError) onError,
+    void Function(ConnectionStateChange) onConnectionStateChange,
+  }) : super(
+        appKey,
+        options,
+        onError: onError,
+        lazyConnect: lazyConnect,
+        enableLogging: enableLogging,
+        onConnectionStateChange: onConnectionStateChange,
+      );
 }
 
 
