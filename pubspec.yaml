@@ -1,7 +1,7 @@
 name: flutter_pusher_client
 description: A Flutter plugin to listen to events sent through pusher. Wraps the native Java and Swift libraries
-version: 0.1.1
-author: Atanda Rasheed <atandarash@gmail.com>
+version: 0.1.2
+# author: Atanda Rasheed <atandarash@gmail.com>
 homepage: https://github.com/heywhy/flutter-pusher-client
 
 environment:

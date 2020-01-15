@@ -10,16 +10,19 @@ BindArgs _$BindArgsFromJson(Map<String, dynamic> json) {
   return BindArgs(
     channelName: json['channelName'] as String,
     eventName: json['eventName'] as String,
+    instanceId: json['instanceId'] as int,
   );
 }
 
 Map<String, dynamic> _$BindArgsToJson(BindArgs instance) => <String, dynamic>{
+      'instanceId': instance.instanceId,
       'channelName': instance.channelName,
       'eventName': instance.eventName,
     };
 
 InitArgs _$InitArgsFromJson(Map<String, dynamic> json) {
   return InitArgs(
+    json['instanceId'] as int,
     json['appKey'] as String,
     json['options'] == null
         ? null
@@ -29,6 +32,7 @@ InitArgs _$InitArgsFromJson(Map<String, dynamic> json) {
 }
 
 Map<String, dynamic> _$InitArgsToJson(InitArgs instance) => <String, dynamic>{
+      'instanceId': instance.instanceId,
       'appKey': instance.appKey,
       'options': instance.options,
       'isLoggingEnabled': instance.isLoggingEnabled,
@@ -86,6 +90,7 @@ PusherEventStreamMessage _$PusherEventStreamMessageFromJson(
     event: json['event'] == null
         ? null
         : Event.fromJson(json['event'] as Map<String, dynamic>),
+    instanceId: json['instanceId'] as String,
     connectionStateChange: json['connectionStateChange'] == null
         ? null
         : ConnectionStateChange.fromJson(
@@ -101,6 +106,7 @@ Map<String, dynamic> _$PusherEventStreamMessageToJson(
         PusherEventStreamMessage instance) =>
     <String, dynamic>{
       'event': instance.event,
+      'instanceId': instance.instanceId,
       'connectionStateChange': instance.connectionStateChange,
       'connectionError': instance.connectionError,
     };

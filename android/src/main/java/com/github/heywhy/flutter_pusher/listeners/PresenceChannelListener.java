@@ -7,6 +7,10 @@ import java.util.Set;
 
 public class PresenceChannelListener extends EventChannelListener implements PresenceChannelEventListener {
 
+    public PresenceChannelListener(String instanceId, boolean isLoggingEnabled) {
+        super(instanceId, isLoggingEnabled);
+    }
+
     @Override
     public void onSubscriptionSucceeded(String channelName) {
         this.onEvent(toPusherEvent(channelName, SUBSCRIPTION_SUCCESS_EVENT, null, null));

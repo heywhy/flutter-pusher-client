@@ -33,7 +33,7 @@ class _MyAppState extends State<MyApp> {
 
       pusher
           .subscribe('channel')
-          .bind('event', (event) => log('event' + event.toJson().toString()));
+          .bind('event', (event) => log('event =>' + event.toString()));
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }

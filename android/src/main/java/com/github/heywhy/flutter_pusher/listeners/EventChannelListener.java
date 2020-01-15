@@ -4,8 +4,6 @@ import android.os.Handler;
 import android.util.Log;
 import android.os.Looper;
 
-import com.github.heywhy.flutter_pusher.FlutterPusherPlugin;
-
 import com.pusher.client.channel.ChannelEventListener;
 import com.pusher.client.channel.PusherEvent;
 
@@ -14,10 +12,21 @@ import java.util.Map;
 
 import org.json.JSONObject;
 
+import static com.github.heywhy.flutter_pusher.FlutterPusherPlugin.TAG;
+import static com.github.heywhy.flutter_pusher.FlutterPusherPlugin.eventSink;
+
 public class EventChannelListener implements ChannelEventListener {
     static final String SUBSCRIPTION_SUCCESS_EVENT = "pusher:subscription_succeeded";
     static final String MEMBER_ADDED_EVENT = "pusher:member_added";
     static final String MEMBER_REMOVED_EVENT = "pusher:member_removed";
+
+    private String instanceId;
+    private boolean isLoggingEnabled;
+
+    public EventChannelListener(String instanceId, boolean isLoggingEnabled) {
+        this.instanceId = instanceId;
+        this.isLoggingEnabled = isLoggingEnabled;
+    }
 
     static PusherEvent toPusherEvent(String channel, String event, String userId, String data) {
         final Map<String, Object> eventData = new HashMap<>();
@@ -47,12 +56,14 @@ public class EventChannelListener implements ChannelEventListener {
                     eventJson.put("channel", channel);
                     eventJson.put("event", event);
                     eventJson.put("data", data);
+                    eventStreamMessageJson.put("isEvent", true);
                     eventStreamMessageJson.put("event", eventJson);
+                    eventStreamMessageJson.put("instanceId", instanceId);
 
-                    FlutterPusherPlugin.eventSink.success(eventStreamMessageJson.toString());
+                    eventSink.success(eventStreamMessageJson.toString());
 
-                    if (FlutterPusherPlugin.isLoggingEnabled) {
-                        Log.d(FlutterPusherPlugin.TAG, String.format("onEvent: \nCHANNEL: %s \nEVENT: %s \nDATA: %s", channel, event, data));
+                    if (isLoggingEnabled) {
+                        Log.d(TAG, String.format("onEvent: \nCHANNEL: %s \nEVENT: %s \nDATA: %s", channel, event, data));
                     }
                 } catch (Exception e) {
                     onError(e);
@@ -73,16 +84,17 @@ public class EventChannelListener implements ChannelEventListener {
                     connectionErrorJson.put("code", "Channel error");
                     connectionErrorJson.put("exception", e);
                     eventStreamMessageJson.put("connectionError", connectionErrorJson);
+                    eventStreamMessageJson.put("instanceId", instanceId);
 
-                    FlutterPusherPlugin.eventSink.success(eventStreamMessageJson.toString());
+                    eventSink.success(eventStreamMessageJson.toString());
 
-                    if (FlutterPusherPlugin.isLoggingEnabled) {
-                        Log.d(FlutterPusherPlugin.TAG, "onError : " + e.getMessage());
+                    if (isLoggingEnabled) {
+                        Log.d(TAG, "onError : " + e.getMessage());
                         e.printStackTrace();
                     }
                 } catch (Exception ex) {
-                    if (FlutterPusherPlugin.isLoggingEnabled) {
-                        Log.d(FlutterPusherPlugin.TAG, "onError exception: " + e.getMessage());
+                    if (isLoggingEnabled) {
+                        Log.d(TAG, "onError exception: " + e.getMessage());
                         ex.printStackTrace();
                     }
                 }

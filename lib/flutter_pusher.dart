@@ -26,11 +26,12 @@ class Channel {
   }
 
   void _subscribe() async {
-    await _channel.invokeMethod('subscribe', this.name);
+    await _channel.invokeMethod('subscribe',
+        {'channelName': this.name, 'instanceId': pusher._instanceId});
   }
 
   /// Bind to listen for events sent on the given channel
-  Future bind(String eventName, void Function(Event) onEvent) async {
+  Future bind(String eventName, Function onEvent) async {
     await this.pusher._bind(name, eventName, onEvent: onEvent);
   }
 
@@ -54,14 +55,15 @@ class Channel {
 class FlutterPusher {
   static const MethodChannel _channel =
       const MethodChannel('com.github.heywhy/pusher');
-  static const EventChannel _eventChannel =
+  final EventChannel _eventChannel =
       const EventChannel('com.github.heywhy/pusherStream');
+  static num _instances = 0;
 
-  Map<String, void Function(Event)> eventCallbacks =
-      Map<String, void Function(Event)>();
-
-  static void Function(ConnectionError) _onError;
-  static void Function(ConnectionStateChange) _onConnectionStateChange;
+  num _instanceId;
+  String _socketId;
+  Map<String, Function> _eventCallbacks = Map<String, Function>();
+  void Function(ConnectionError) _onError;
+  void Function(ConnectionStateChange) _onConnectionStateChange;
 
   FlutterPusher(
     String appKey,
@@ -72,12 +74,13 @@ class FlutterPusher {
     void Function(ConnectionStateChange) onConnectionStateChange,
   })  : assert(appKey != null),
         assert(options != null) {
-
+    _instanceId = _instances++;
     _onError = onError;
     _onConnectionStateChange = onConnectionStateChange;
     _init(appKey, options, enableLogging: enableLogging);
     if (!lazyConnect) {
-      connect(onError: onError, onConnectionStateChange: onConnectionStateChange);
+      connect(
+          onError: onError, onConnectionStateChange: onConnectionStateChange);
     }
   }
 
@@ -87,16 +90,18 @@ class FlutterPusher {
     void Function(ConnectionError) onError,
   }) async {
     _onConnectionStateChange = onConnectionStateChange != null
-      ? onConnectionStateChange : _onConnectionStateChange;
+        ? onConnectionStateChange
+        : _onConnectionStateChange;
     _onError = onError != null ? onError : _onError;
 
-    await _channel.invokeMethod('connect');
+    await _channel.invokeMethod(
+        'connect', jsonEncode({'instanceId': _instanceId}));
   }
-
 
   /// Disconnect the client from pusher
   Future disconnect() async {
-    await _channel.invokeMethod('disconnect');
+    await _channel.invokeMethod(
+        'disconnect', jsonEncode({'instanceId': _instanceId}));
   }
 
   /// Subscribe to a channel
@@ -107,13 +112,19 @@ class FlutterPusher {
 
   /// Unsubscribe from a channel
   Future unsubscribe(String channelName) async {
-    await _channel.invokeMethod('unsubscribe', channelName);
+    await _channel.invokeMethod(
+        'unsubscribe', {'channelName': channelName, 'instanceId': _instanceId});
+  }
+
+  String getSocketId() {
+    return _socketId;
   }
 
   void _init(String appKey, PusherOptions options, {bool enableLogging}) async {
     _eventChannel.receiveBroadcastStream().listen(_handleEvent);
 
     final initArgs = jsonEncode(InitArgs(
+      _instanceId,
       appKey,
       options,
       isLoggingEnabled: enableLogging,
@@ -122,16 +133,21 @@ class FlutterPusher {
     await _channel.invokeMethod('init', initArgs);
   }
 
-  void _handleEvent([dynamic arguments]) {
+  void _handleEvent([dynamic arguments]) async {
     var message = PusherEventStreamMessage.fromJson(jsonDecode(arguments));
+
+    if (message.instanceId != _instanceId.toString()) {
+      return;
+    }
 
     if (message.isEvent) {
       var callback =
-          eventCallbacks[message.event.channel + message.event.event];
+          _eventCallbacks[message.event.channel + message.event.event];
       if (callback != null) {
-        callback(message.event);
+        callback(jsonDecode(message.event.data));
       }
     } else if (message.isConnectionStateChange) {
+      _socketId = await _channel.invokeMethod('getSocketId', {'instanceId': _instanceId});
       if (_onConnectionStateChange != null) {
         _onConnectionStateChange(message.connectionStateChange);
       }
@@ -145,29 +161,32 @@ class FlutterPusher {
   Future _bind(
     String channelName,
     String eventName, {
-    void Function(Event) onEvent,
+    Function onEvent,
   }) async {
     final bindArgs = jsonEncode(BindArgs(
+      instanceId: _instanceId,
       channelName: channelName,
       eventName: eventName,
     ).toJson());
 
-    eventCallbacks[channelName + eventName] = onEvent;
+    _eventCallbacks[channelName + eventName] = onEvent;
     await _channel.invokeMethod('bind', bindArgs);
   }
 
   Future _unbind(String channelName, String eventName) async {
     final bindArgs = jsonEncode(BindArgs(
+      instanceId: _instanceId,
       channelName: channelName,
       eventName: eventName,
     ).toJson());
 
-    eventCallbacks.remove(channelName + eventName);
+    _eventCallbacks.remove(channelName + eventName);
     await _channel.invokeMethod('unbind', bindArgs);
   }
 
   Future _trigger(String channelName, String eventName) async {
     final bindArgs = jsonEncode(BindArgs(
+      instanceId: _instanceId,
       channelName: channelName,
       eventName: eventName,
     ).toJson());
@@ -177,7 +196,7 @@ class FlutterPusher {
 }
 
 class PusherClient extends FlutterPusher {
-    PusherClient(
+  PusherClient(
     String appKey,
     PusherOptions options, {
     bool lazyConnect = false,
@@ -185,22 +204,23 @@ class PusherClient extends FlutterPusher {
     void Function(ConnectionError) onError,
     void Function(ConnectionStateChange) onConnectionStateChange,
   }) : super(
-        appKey,
-        options,
-        onError: onError,
-        lazyConnect: lazyConnect,
-        enableLogging: enableLogging,
-        onConnectionStateChange: onConnectionStateChange,
-      );
+          appKey,
+          options,
+          onError: onError,
+          lazyConnect: lazyConnect,
+          enableLogging: enableLogging,
+          onConnectionStateChange: onConnectionStateChange,
+        );
 }
-
 
 @JsonSerializable()
 class BindArgs {
+  final int instanceId;
   final String channelName;
   final String eventName;
 
-  BindArgs({this.channelName, this.eventName});
+  BindArgs({this.channelName, this.eventName, this.instanceId})
+      : assert(instanceId != null);
 
   factory BindArgs.fromJson(Map<String, dynamic> json) =>
       _$BindArgsFromJson(json);
@@ -208,14 +228,15 @@ class BindArgs {
   Map<String, dynamic> toJson() => _$BindArgsToJson(this);
 }
 
-
 @JsonSerializable()
 class InitArgs {
+  final int instanceId;
   final String appKey;
   final PusherOptions options;
   final bool isLoggingEnabled;
 
-  InitArgs(this.appKey, this.options, {this.isLoggingEnabled = false});
+  InitArgs(this.instanceId, this.appKey, this.options,
+      {this.isLoggingEnabled = false});
 
   factory InitArgs.fromJson(Map<String, dynamic> json) =>
       _$InitArgsFromJson(json);
@@ -266,6 +287,7 @@ class PusherAuth {
 @JsonSerializable()
 class PusherEventStreamMessage {
   final Event event;
+  final String instanceId;
   final ConnectionStateChange connectionStateChange;
   final ConnectionError connectionError;
 
@@ -276,7 +298,10 @@ class PusherEventStreamMessage {
   bool get isConnectionError => connectionError != null;
 
   PusherEventStreamMessage(
-      {this.event, this.connectionStateChange, this.connectionError});
+      {this.event,
+      this.instanceId,
+      this.connectionStateChange,
+      this.connectionError});
 
   factory PusherEventStreamMessage.fromJson(Map<String, dynamic> json) =>
       _$PusherEventStreamMessageFromJson(json);
