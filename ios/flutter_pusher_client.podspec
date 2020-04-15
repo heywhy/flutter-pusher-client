@@ -8,12 +8,12 @@ pusherLibraryVersion = '~> 7.2'
 
 Pod::Spec.new do |s|
   s.name             = 'flutter_pusher_client'
-  s.version          = '0.1.0'
+  s.version          = libraryVersion
   s.summary          = 'A new flutter plugin project.'
   s.description      = <<-DESC
 A new flutter plugin project.
                        DESC
-  # s.homepage         = 'http://example.com'
+  s.homepage         = 'http://example.com'
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Atanda Rasheed' => 'atandarash@gmail.com' }
   s.source           = { :path => '.' }

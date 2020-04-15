@@ -1,5 +1,5 @@
 #import "FlutterPusherPlugin.h"
-#import <flutter_pusher/flutter_pusher-Swift.h>
+#import <flutter_pusher_client/flutter_pusher_client-Swift.h>
 
 @implementation FlutterPusherPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
