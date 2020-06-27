@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   s.description      = <<-DESC
 A new flutter plugin project.
                        DESC
-  # s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/heywhy/flutter-pusher-client'
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Atanda Rasheed' => 'atandarash@gmail.com' }
   s.source           = { :path => '.' }
@@ -22,7 +22,7 @@ A new flutter plugin project.
   s.dependency 'Flutter'
   s.dependency 'PusherSwift', pusherLibraryVersion
 
-  s.ios.deployment_target = '9.0'
+  s.ios.deployment_target = '8.0'
 
 s.prepare_command = <<-CMD
     echo // Generated file, do not edit > Classes/UserAgent.h
