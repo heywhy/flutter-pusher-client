@@ -51,5 +51,26 @@ void main() {
 
 Connection to the server can be delayed, so set the **lazyConnect** prop on the client constructor.
 
+##### R8/Proguard code obfuscation
+
+If you have enabled code obfuscation with R8 or proguard, you need to add the following rule.
+
+`android/app/build.gradle`:
+
+```groovy
+buildTypes {
+  release {
+    minifyEnabled true
+    proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+  }
+}
+```
+
+`android/app/proguard-rules.pro`:
+
+```
+-keep class com.github.heywhy.flutter_pusher.** { *; }
+```
+
 ## Development
 Generate the models and the factories: `flutter packages pub run build_runner build --delete-conflicting-outputs`
