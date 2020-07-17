@@ -26,8 +26,10 @@ class Channel {
   }
 
   void _subscribe() async {
-    await _channel.invokeMethod('subscribe',
-        {'channelName': this.name, 'instanceId': pusher._instanceId});
+    var args = jsonEncode(
+        BindArgs(instanceId: pusher._instanceId, channelName: this.name)
+            .toJson());
+    await _channel.invokeMethod('subscribe', args);
   }
 
   /// Bind to listen for events sent on the given channel
@@ -112,8 +114,8 @@ class FlutterPusher {
 
   /// Unsubscribe from a channel
   Future unsubscribe(String channelName) async {
-    await _channel.invokeMethod(
-        'unsubscribe', {'channelName': channelName, 'instanceId': _instanceId});
+    await _channel.invokeMethod('unsubscribe',
+        jsonEncode({'channelName': channelName, 'instanceId': _instanceId}));
   }
 
   String getSocketId() {
@@ -147,7 +149,8 @@ class FlutterPusher {
         callback(jsonDecode(message.event.data));
       }
     } else if (message.isConnectionStateChange) {
-      _socketId = await _channel.invokeMethod('getSocketId', {'instanceId': _instanceId});
+      _socketId = await _channel.invokeMethod(
+          'getSocketId', jsonEncode({'instanceId': _instanceId}));
       if (_onConnectionStateChange != null) {
         _onConnectionStateChange(message.connectionStateChange);
       }

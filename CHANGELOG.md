@@ -1,3 +1,7 @@
+## 0.3.0
+
+* Enable iOS support
+
 ## 0.2.1
 
 * Upgrade kotlin version to (v1.3.61)

@@ -27,9 +27,8 @@ class _MyAppState extends State<MyApp> {
     String platformVersion;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
-      var options =
-          PusherOptions(host: '10.0.2.2', port: 6001, encrypted: false);
-      PusherClient pusher = PusherClient('app', options, enableLogging: true);
+      var options = PusherOptions(cluster: 'eu');
+      PusherClient pusher = PusherClient('api_key', options, enableLogging: true,);
 
       pusher
           .subscribe('channel')
