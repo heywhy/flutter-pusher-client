@@ -14,7 +14,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
+  String? _platformVersion = 'Unknown';
 
   @override
   void initState() {
@@ -24,15 +24,22 @@ class _MyAppState extends State<MyApp> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    String platformVersion;
+    String? platformVersion;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       var options = PusherOptions(cluster: 'eu');
-      PusherClient pusher = PusherClient('api_key', options, enableLogging: true,);
+      PusherClient pusher = PusherClient('d7b885bedbb6693d0ec8', options,
+          enableLogging: true, onConnectionStateChange: (state) {
+        print("on connection change ${state!.currentState}");
+      }, onError: (error) {
+        print("on:error ${error!.message}");
+      });
+
+      print("hello world");
 
       pusher
           .subscribe('channel')
-          .bind('event', (event) => log('event =>' + event.toString()));
+          .bind('event', (event) => print('event =>' + event.toString()));
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }

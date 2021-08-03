@@ -37,7 +37,7 @@ public class PusherInstance: PusherDelegate {
                 result(FlutterMethodNotImplemented)
         }
     }
-    
+
     public func getSocketId(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         result(pusher?.connection.socketId);
     }
@@ -66,7 +66,7 @@ public class PusherInstance: PusherDelegate {
                 authMethod: initArgs.options.auth != nil ? AuthMethod.authRequestBuilder(authRequestBuilder: AuthRequestBuilder(endpoint: initArgs.options.auth!.endpoint, headers: initArgs.options.auth!.headers, isLoggingEnabled: isLoggingEnabled)): .noMethod,
                 host: initArgs.options.host != nil ? .host(initArgs.options.host!) : (initArgs.options.cluster != nil ? .cluster(initArgs.options.cluster!) : .host("ws.pusherapp.com")),
                 port: initArgs.options.port ?? (initArgs.options.encrypted ?? true ? 443 : 80),
-                encrypted: initArgs.options.encrypted ?? true,
+                // encrypted: initArgs.options.encrypted ?? true,
                 activityTimeout: Double(initArgs.options.activityTimeout ?? 30000) / 1000
             )
 
@@ -177,7 +177,7 @@ public class PusherInstance: PusherDelegate {
             let channel = channels[bindArgs.channelName]
             if let channelObj = channel {
                 unbindIfBound(channelName: bindArgs.channelName, eventName: bindArgs.eventName)
-                bindedEvents[bindArgs.channelName + bindArgs.eventName] = channelObj.bind(eventName: bindArgs.eventName, callback: { data in
+                bindedEvents[bindArgs.channelName + bindArgs.eventName] = channelObj.bind(eventName: bindArgs.eventName, eventCallback: { data in
                     do {
                         if let dataObj = data as? [String : AnyObject] {
                             let pushJsonData = try! JSONSerialization.data(withJSONObject: dataObj)
