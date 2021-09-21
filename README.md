@@ -1,3 +1,5 @@
+This project has now been archived, see [comment](https://github.com/heywhy/flutter-pusher-client/issues/25#issuecomment-923914611) for more information.
+
 # Pusher Flutter Client
 
 [![pub package](https://img.shields.io/pub/v/flutter_pusher_client.svg)](https://pub.dartlang.org/packages/flutter_pusher_client)
